@@ -1,25 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[40]:
-
-
-# Copilot LLM Review Generator V1.0
-# Created on: 23rd April, 2024
-# Modified on: 23rd April, 2024
-# Author: Mu Sigma Inc.
-
-#This notebook has following features:
-    ##Generate a summary of the Copilot reviews from user prompt
-    ##Generate a comparison of Copilot features based on reviews from user prompt
-    ##Generate feature suggestion of Copilot based on the reviews from user prompt
-    ##Generate Quantitative numbers around Copilot Reviews from user prompt
-    ##Automatically identify the nature of the user question and what is being asked and print corresponding outputs
-    ##Retain context based on conversation history
-
-#In this version, we have made some bug fixes. We have also removed the retain context based on conversation history feature due to bugs.
-
-
 #Import Required Libraries
 import streamlit as st
 from azure.core.credentials import AzureKeyCredential
@@ -180,8 +158,6 @@ def query_detailed(user_question, vector_store_path="faiss_index_CopilotSample")
     except Exception as e:
         print(f"An error occurred during the detailed query: {e}")
         
-
-
 
 ## Review Summarization (Quantifiable)
 
@@ -446,9 +422,6 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-# In[ ]:
 
 
 
