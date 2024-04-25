@@ -94,5 +94,6 @@ streamlit==1.32.2
 sqlalchemy==1.4.46
 pandas==1.5.3
 pandasai==2.0.35
+pandasql==0.7.3
 pillow==10.2.0
 pyodbc==5.0.1
