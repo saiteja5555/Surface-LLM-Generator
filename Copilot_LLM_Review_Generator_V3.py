@@ -31,8 +31,8 @@ import pandasql as ps
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
 
 #Initializing API Keys to use LLM
-os.environ["AZURE_OPENAI_API_KEY"] = "5568e3b7d15343598a40b198d9a61052"
-os.environ["AZURE_OPENAI_ENDPOINT"] = "https://hulk-openai.openai.azure.com/"
+os.environ["AZURE_OPENAI_API_KEY"] = "b71d4af1ea184bfb9444b448f4f5412a"
+os.environ["AZURE_OPENAI_ENDPOINT"] = "https://fordmustang.openai.azure.com/"
 
 
 #Reading the dataset
@@ -74,7 +74,7 @@ def get_text_chunks(text):
 # Function to create and store embeddings
 def get_vector_store(text_chunks):
     try:
-        embeddings = AzureOpenAIEmbeddings(azure_deployment="Embedding-Model")
+        embeddings = AzureOpenAIEmbeddings(azure_deployment="MV_Agusta")
         vector_store = FAISS.from_texts(text_chunks, embedding=embeddings)
         vector_store.save_local("faiss_index_CopilotSample")
         return vector_store
@@ -135,8 +135,8 @@ def get_conversational_chain_detailed():
         """
         prompt = PromptTemplate(template=prompt_template, input_variables=["context", "question"])
         model = AzureChatOpenAI(
-            azure_deployment="Verbatim-Synthesis",
-            api_version='2023-12-01-preview',
+            azure_deployment="Thruxton_R",
+            api_version='2024-03-01-preview',
             temperature=0.6)
         chain = load_qa_chain(model, chain_type="stuff", prompt=prompt)
         return chain
@@ -147,7 +147,7 @@ def get_conversational_chain_detailed():
 # Function to handle user queries using the existing vector store
 def query_detailed(user_question, vector_store_path="faiss_index_CopilotSample"):
     try:
-        embeddings = AzureOpenAIEmbeddings(azure_deployment="Embedding-Model")
+        embeddings = AzureOpenAIEmbeddings(azure_deployment="MV_Agusta")
         vector_store = FAISS.load_local(vector_store_path, embeddings, allow_dangerous_deserialization=True)
         chain = get_conversational_chain_detailed()
         docs = vector_store.similarity_search(user_question)
@@ -256,8 +256,8 @@ def get_conversational_chain_quant():
         """
         prompt = PromptTemplate(template=prompt_template, input_variables=["context", "question"])
         model = AzureChatOpenAI(
-            azure_deployment="Verbatim-Synthesis",
-            api_version='2023-12-01-preview',
+            azure_deployment="Thruxton_R",
+            api_version='2024-03-01-preview',
             temperature=0.6)
         chain = load_qa_chain(model, chain_type="stuff", prompt=prompt)
         return chain
@@ -269,7 +269,7 @@ def get_conversational_chain_quant():
 def query_quant(user_question, vector_store_path="faiss_index_CopilotSample"):
     try:
         # Initialize the embeddings model
-        embeddings = AzureOpenAIEmbeddings(azure_deployment="Embedding-Model")
+        embeddings = AzureOpenAIEmbeddings(azure_deployment="MV_Agusta")
         
         # Load the vector store with the embeddings model
         vector_store = FAISS.load_local(vector_store_path, embeddings, allow_dangerous_deserialization=True)
@@ -316,8 +316,8 @@ def identify_prompt(user_question):
         """
         prompt = PromptTemplate(template=prompt_template, input_variables=["context", "question"])
         model = AzureChatOpenAI(
-            azure_deployment="Verbatim-Synthesis",
-            api_version='2023-12-01-preview')
+            azure_deployment="Thruxton_R",
+            api_version='2024-03-01-preview')
         chain = load_qa_chain(model, chain_type="stuff", prompt=prompt)
         response = chain({"input_documents": [], "question": user_question}, return_only_outputs=True)
         if "detailed" in response["output_text"].lower():
