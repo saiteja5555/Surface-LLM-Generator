@@ -28,11 +28,10 @@ import time
 from PIL import Image
 import base64
 import pandasql as ps
-os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
 
 #Initializing API Keys to use LLM
-os.environ["AZURE_OPENAI_API_KEY"] = "b71d4af1ea184bfb9444b448f4f5412a"
-os.environ["AZURE_OPENAI_ENDPOINT"] = "https://fordmustang.openai.azure.com/"
+os.environ[NAI"AZURE_OPE_API_KEY"] = os.getenv("AZURE_OPE_API_KEY")
+os.environ["AZURE_OPENAI_ENDPOINT"] = os.getenv("AZURE_OPENAI_ENDPOINT")
 
 
 #Reading the dataset
