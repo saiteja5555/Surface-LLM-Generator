@@ -26,6 +26,11 @@ jobs:
         run: |
           python -m venv venv
           source venv/bin/activate
+
+      - name: Set environment variables with secret keys
+        run: |
+          export AZURE_OPENAI_API_KEY=${{ secrets.AZURE_OPENAI_API_KEY }}
+          export AZURE_OPENAI_ENDPOINT=${{ secrets.AZURE_OPENAI_ENDPOINT }}
       
       - name: Install dependencies
         run: pip install -r requirements.txt
@@ -68,6 +73,10 @@ jobs:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_1E89DF16A1814BF1AE584B06D18F2444 }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_79948D7716094F6AA0990DA3EBC6501A }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_F007DF4AF98D4A0ABEFB27DDC2193C5F }}
+      - name: Set environment variables with secret keys (deploy stage)
+        run: |
+          export AZURE_OPENAI_API_KEY=${{ secrets.AZURE_OPENAI_API_KEY }}
+          export AZURE_OPENAI_ENDPOINT=${{ secrets.AZURE_OPENAI_ENDPOINT }}
 
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v2
