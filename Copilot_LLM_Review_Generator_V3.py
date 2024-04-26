@@ -36,7 +36,7 @@ os.environ["AZURE_OPENAI_ENDPOINT"] = "https://fordmustang.openai.azure.com/"
 
 
 #Reading the dataset
-Sentiment_Data  = pd.read_csv("CopilotSamplewithAspect_translated.csv")
+Sentiment_Data  = pd.read_csv("Sampled_Copilot_Reviews_Final.csv")
 
 #Function to derive Sentiment Score based on Sentiment
 def Sentiment_Score_Derivation(value):
