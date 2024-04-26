@@ -18,35 +18,38 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set up Python version
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v4  # Updated to latest version
         with:
           python-version: '3.9'
 
       - name: Create and start virtual environment
         run: |
           python -m venv venv
-          source venv/bin/activate
+          source venv/bin/activate  # Important to activate the virtual environment
 
       - name: Set environment variables with secret keys
         run: |
+          source venv/bin/activate
           export AZURE_OPENAI_API_KEY=${{ secrets.AZURE_OPENAI_API_KEY }}
           export AZURE_OPENAI_ENDPOINT=${{ secrets.AZURE_OPENAI_ENDPOINT }}
-      
+
       - name: Install dependencies
-        run: pip install -r requirements.txt
-        
+        run: |
+          source venv/bin/activate
+          pip install -r requirements.txt
+
       # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
 
       - name: Zip artifact for deployment
-        run: zip release.zip ./* -r
+        run: |
+          source venv/bin/activate
+          zip -r release.zip ./*  # Zip all files for deployment
 
       - name: Upload artifact for deployment jobs
         uses: actions/upload-artifact@v3
         with:
           name: python-app
-          path: |
-            release.zip
-            !venv/
+          path: release.zip
 
   deploy:
     runs-on: ubuntu-latest
@@ -55,7 +58,7 @@ jobs:
       name: 'Production'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
     permissions:
-      id-token: write #This is required for requesting the JWT
+      id-token: write
 
     steps:
       - name: Download artifact from build job
@@ -64,16 +67,17 @@ jobs:
           name: python-app
 
       - name: Unzip artifact for deployment
-        run: unzip release.zip
+        run: |
+          unzip release.zip
 
-      
       - name: Login to Azure
         uses: azure/login@v1
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_1E89DF16A1814BF1AE584B06D18F2444 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_79948D7716094F6AA0990DA3EBC6501A }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_F007DF4AF98D4A0ABEFB27DDC2193C5F }}
-      - name: Set environment variables with secret keys (deploy stage)
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
+
+      - name: Set environment variables with secret keys
         run: |
           export AZURE_OPENAI_API_KEY=${{ secrets.AZURE_OPENAI_API_KEY }}
           export AZURE_OPENAI_ENDPOINT=${{ secrets.AZURE_OPENAI_ENDPOINT }}
@@ -83,5 +87,4 @@ jobs:
         id: deploy-to-webapp
         with:
           app-name: 'SurfaceAnalyticsGenerator'
-          slot-name: 'Production'
-          
+          package: .  # Deploys all files in the current directory
