@@ -30,7 +30,7 @@ import base64
 import pandasql as ps
 
 #Initializing API Keys to use LLM
-os.environ[NAI"AZURE_OPE_API_KEY"] = os.getenv("AZURE_OPE_API_KEY")
+os.environ["AZURE_OPE_API_KEY"] = os.getenv("AZURE_OPE_API_KEY")
 os.environ["AZURE_OPENAI_ENDPOINT"] = os.getenv("AZURE_OPENAI_ENDPOINT")
 
 
