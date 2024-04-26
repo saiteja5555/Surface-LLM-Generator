@@ -28,15 +28,24 @@ import time
 from PIL import Image
 import base64
 import pandasql as ps
-os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
 
 #Initializing API Keys to use LLM
-os.environ["AZURE_OPENAI_API_KEY"] = "b71d4af1ea184bfb9444b448f4f5412a"
-os.environ["AZURE_OPENAI_ENDPOINT"] = "https://fordmustang.openai.azure.com/"
+api_key = os.getenv("AZURE_OPENAI_API_KEY")
+endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
+
+# Ensure they are strings
+if api_key is None:
+    raise EnvironmentError("AZURE_OPENAI_API_KEY not found in environment variables")
+
+if endpoint is None:
+    raise EnvironmentError("AZURE_OPENAI_ENDPOINT not found in environment variables")
+
+os.environ["AZURE_OPENAI_API_KEY"] = api_key
+os.environ["AZURE_OPENAI_ENDPOINT"] = endpoint
 
 
 #Reading the dataset
-Sentiment_Data  = pd.read_csv("CopilotSamplewithAspect_translated.csv")
+Sentiment_Data  = pd.read_csv("Sampled_Copilot_Reviews_Final.csv")
 
 #Function to derive Sentiment Score based on Sentiment
 def Sentiment_Score_Derivation(value):
