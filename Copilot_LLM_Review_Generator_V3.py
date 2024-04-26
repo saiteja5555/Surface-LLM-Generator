@@ -30,8 +30,18 @@ import base64
 import pandasql as ps
 
 #Initializing API Keys to use LLM
-os.environ["AZURE_OPE_API_KEY"] = os.getenv("AZURE_OPE_API_KEY")
-os.environ["AZURE_OPENAI_ENDPOINT"] = os.getenv("AZURE_OPENAI_ENDPOINT")
+api_key = os.getenv("AZURE_OPENAI_API_KEY")
+endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
+
+# Ensure they are strings
+if api_key is None:
+    raise EnvironmentError("AZURE_OPENAI_API_KEY not found in environment variables")
+
+if endpoint is None:
+    raise EnvironmentError("AZURE_OPENAI_ENDPOINT not found in environment variables")
+
+os.environ["AZURE_OPENAI_API_KEY"] = api_key
+os.environ["AZURE_OPENAI_ENDPOINT"] = endpoint
 
 
 #Reading the dataset
