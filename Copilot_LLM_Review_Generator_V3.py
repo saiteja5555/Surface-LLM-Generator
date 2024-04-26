@@ -52,7 +52,7 @@ Sentiment_Data["Sentiment_Score"] = Sentiment_Data["Sentiment"].apply(Sentiment_
 Sentiment_Data["Review_Count"] = 1.0
 
 
-################################# Definiting Functions #################################
+################################ Definiting Functions #################################
 
 #Review Summarization (Detailed) + Feature Comparison and Suggestion
 
