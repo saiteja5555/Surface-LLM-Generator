@@ -1,31 +1,4 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[4]:
-
-
-# Copilot LLM Review Generator V1.0
-# Created on: 23rd April, 2024
-# Modified on: 24th April, 2024
-# Author: Mu Sigma Inc.
-
-#This notebook has following features:
-    ##Generate a summary of the Copilot reviews from user prompt
-    ##Generate a comparison of Copilot features based on reviews from user prompt
-    ##Generate feature suggestion of Copilot based on the reviews from user prompt
-    ##Generate Quantitative numbers around Copilot Reviews from user prompt
-    ##Automatically identify the nature of the user question and what is being asked and print corresponding outputs
-    ##Retain context based on conversation history
-
-#In V2 version, we have made some bug fixes. We have also removed the retain context based on conversation history feature due to bugs.
-#In V3, we have improved the UI.
-#In V3.1, we have refined the prompts.
-#In V3.2, we have implemented exception handling
-#In V3.3, retaining context based on conversation history.
-
-
 #Import Required Libraries
-import gradio as gr
 import streamlit as st
 from azure.core.credentials import AzureKeyCredential
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -45,7 +18,6 @@ import pyodbc
 import urllib
 from sqlalchemy import create_engine
 import pandas as pd
-import keyring
 from azure.identity import InteractiveBrowserCredential
 from pandasai import SmartDataframe
 import pandas as pd
@@ -56,12 +28,11 @@ import time
 from PIL import Image
 import base64
 import pandasql as ps
-from IPython.display import clear_output
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
 
 #Initializing API Keys to use LLM
-os.environ["AZURE_OPENAI_API_KEY"] = "b71d4af1ea184bfb9444b448f4f5412a"
-os.environ["AZURE_OPENAI_ENDPOINT"] = "https://fordmustang.openai.azure.com/"
+AZURE_OPENAI_API_KEY = os.environ.get("AZURE_OPENAI_API_KEY")
+AZURE_OPENAI_ENDPOINT = os.environ.get("AZURE_OPENAI_ENDPOINT")
 
 
 #Reading the dataset
@@ -69,16 +40,12 @@ Sentiment_Data  = pd.read_csv("Sampled_Copilot_Reviews_Final.csv")
 
 #Function to derive Sentiment Score based on Sentiment
 def Sentiment_Score_Derivation(value):
-    try:
-        if value == "positive":
-            return 1
-        elif value == "negative":
-            return -1
-        else:
-            return 0
-    except Exception as e:
-        err = f"An error occurred while deriving Sentiment Score: {e}"
-        return err    
+    if value == "positive":
+        return 1
+    elif value == "negative":
+        return -1
+    else:
+        return 0
 
 #Deriving Sentiment Score and Review Count columns into the dataset
 Sentiment_Data["Sentiment_Score"] = Sentiment_Data["Sentiment"].apply(Sentiment_Score_Derivation)
@@ -91,13 +58,9 @@ Sentiment_Data["Review_Count"] = 1.0
 
 #Function to extract text from file
 def get_text_from_file(txt_file):
-    try:
-        with open(txt_file, 'r',encoding='latin') as file:
-            text = file.read()
-        return text
-    except Exception as e:
-        err = f"An error occurred while getting text from file: {e}"
-        return err
+    with open(txt_file, 'r',encoding='latin') as file:
+        text = file.read()
+    return text
 
 # Function to split text into chunks
 def get_text_chunks(text):
@@ -105,9 +68,8 @@ def get_text_chunks(text):
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=10000, chunk_overlap=1000)
         chunks = text_splitter.split_text(text)
         return chunks
-    except Exception as e:
-        err = f"An error occurred while getting text chunks: {e}"
-        return err
+    except:
+        Print("Text Splitting was not happend")
 
 # Function to create and store embeddings
 def get_vector_store(text_chunks):
@@ -117,8 +79,9 @@ def get_vector_store(text_chunks):
         vector_store.save_local("faiss_index_CopilotSample")
         return vector_store
     except Exception as e:
-        err = f"An error occurred while getting vectos: {e}"
-        return err
+        print(f"An error occurred while creating the vector store: {e}")
+        
+
 
 # Function to setup the vector store (to be run once or upon text update)
 def setup(txt_file_path):
@@ -128,22 +91,13 @@ def setup(txt_file_path):
         get_vector_store(text_chunks)
         print("Setup completed. Vector store is ready for queries.")
     except Exception as e:
-        err = f"An error occurred while setting up vector store: {e}"
-        return err
+        print(f"An error occurred during setup: {e}")
 
 # Function to get conversational chain
-def get_conversational_chain_detailed(history):
+def get_conversational_chain_detailed():
     try:
-        hist = """"""
-        for i in history:
-            hist = hist+"\nUser: "+i[0]
-            if isinstance(i[1],pd.DataFrame):
-                x = i[1].to_string()
-            else:
-                x = i[1]
-            hist = hist+"\nResponse: "+x
-        prompt_template = """
-         Given a dataset with these columns: Review, Data_Source, Geography, Product_Family, Sentiment and Aspect (also called Features)
+        prompt_template ="""
+        Given a dataset with these columns: Review, Data_Source, Geography, Product_Family, Sentiment and Aspect (also called Features)
           
           Review: This column contains the opinions and experiences of users regarding different product families across geographies, providing insights into customer satisfaction or complaints and areas for improvement.
           Data_Source: This column indicates the platform from which the user reviews were collected, such as Reddit, Play Store, App Store, Tech Websites, or YouTube videos.
@@ -176,26 +130,25 @@ def get_conversational_chain_detailed(history):
         model = AzureChatOpenAI(
             azure_deployment="Thruxton_R",
             api_version='2024-03-01-preview',
-            temperature = 0.4)
+            temperature=0.6)
         chain = load_qa_chain(model, chain_type="stuff", prompt=prompt)
         return chain
     except Exception as e:
-        err = f"An error occurred while getting conversation chain for detailed review summarization: {e}"
-        return err
+        print(f"An error occurred while setting up the conversational chain: {e}")
+        
 
 # Function to handle user queries using the existing vector store
-def query_detailed(user_question, history, vector_store_path="faiss_index_CopilotSample"):
+def query_detailed(user_question, vector_store_path="faiss_index_CopilotSample"):
     try:
         embeddings = AzureOpenAIEmbeddings(azure_deployment="MV_Agusta")
         vector_store = FAISS.load_local(vector_store_path, embeddings, allow_dangerous_deserialization=True)
-        chain = get_conversational_chain_detailed(history)
+        chain = get_conversational_chain_detailed()
         docs = vector_store.similarity_search(user_question)
         response = chain({"input_documents": docs, "question": user_question}, return_only_outputs=True)
         return response["output_text"]
     except Exception as e:
-        err = f"An error occurred while getting LLM response for detailed review summarization: {e}"
-        return err
-
+        print(f"An error occurred during the detailed query: {e}")
+        
 
 ## Review Summarization (Quantifiable)
 
@@ -220,8 +173,9 @@ def convert_top_to_limit(sql):
 
         return ' '.join(tokens) if is_top_used else sql
     except Exception as e:
-        err = f"An error occurred while converting Top to Limit in SQL Query: {e}"
-        return err
+        print(f"An error occurred while converting TOP to LIMIT: {e}")
+        
+
 
 #Function to add Table Name into the SQL Query as it is, as the Table Name is Case Sensitive here
 def process_tablename(sql, table_name):
@@ -230,22 +184,14 @@ def process_tablename(sql, table_name):
         query = x.replace(table_name.upper(), table_name)
         return query
     except Exception as e:
-        err = f"An error occurred while processing table name in SQL query: {e}"
-        return err
+        print(f"An error occurred while processing the table name: {e}")
+        
 
 ## Generating Response by Identifying Prompt Nature
 
-#Function to get conversation chain for quantitative outputs and also add context from historical conversation as well
-def get_conversational_chain_quant(history):
+#Function to get conversation chain for quantitative outputs and also add context from historical conversation as wel   
+def get_conversational_chain_quant():
     try:
-        hist = """"""
-        for i in history:
-            hist = hist+"\nUser: "+i[0]
-            if isinstance(i[1],pd.DataFrame):
-                x = i[1].to_string()
-            else:
-                x = i[1]
-            hist = hist+"\nResponse: "+x
         prompt_template = """
         1. Your Job is to convert the user question to SQL Query (Follow Microsoft SQL server SSMS syntax.). You have to give the query so that it can be used on Microsoft SQL server SSMS.You have to only return query as a result.
             2. There is only one table with table name Sentiment_Data where each row is a user review. The table has 10 columns, they are:
@@ -306,15 +252,15 @@ def get_conversational_chain_quant(history):
         model = AzureChatOpenAI(
             azure_deployment="Thruxton_R",
             api_version='2024-03-01-preview',
-            temperature = 0.6)
+            temperature=0.6)
         chain = load_qa_chain(model, chain_type="stuff", prompt=prompt)
         return chain
     except Exception as e:
-        err = f"An error occurred while getting conversation chain for quantifiable review summarization: {e}"
-        return err
+        print(f"An error occurred while setting up the quantitative conversational chain: {e}")
+
 
 #Function to convert user prompt to quantitative outputs for Copilot Review Summarization
-def query_quant(user_question, history, vector_store_path="faiss_index_CopilotSample"):
+def query_quant(user_question, vector_store_path="faiss_index_CopilotSample"):
     try:
         # Initialize the embeddings model
         embeddings = AzureOpenAIEmbeddings(azure_deployment="MV_Agusta")
@@ -323,21 +269,18 @@ def query_quant(user_question, history, vector_store_path="faiss_index_CopilotSa
         vector_store = FAISS.load_local(vector_store_path, embeddings, allow_dangerous_deserialization=True)
         
         # Rest of the function remains unchanged
-        chain = get_conversational_chain_quant(history)
+        chain = get_conversational_chain_quant()
         docs = []
         response = chain({"input_documents": docs, "question": user_question}, return_only_outputs=True)
         SQL_Query = response["output_text"]
         SQL_Query = convert_top_to_limit(SQL_Query)
         SQL_Query = process_tablename(SQL_Query,"Sentiment_Data")
-    #     print(SQL_Query)
         data = ps.sqldf(SQL_Query, globals())
         data_1 = data
         html_table = data.to_html(index=False)
-    #     return html_table
         return data_1
     except Exception as e:
-        err = f"An error occurred while generating response for quantitative review summarization: {e}"
-        return err
+        print(f"An error occurred while processing the quantitative query: {e}")
 
 
 ## Generating Response by Identifying Prompt Nature
@@ -385,11 +328,10 @@ def identify_prompt(user_question):
         else:
             return "Others"+"\nPrompt Identified as:"+response["output_text"]+"\n"
     except Exception as e:
-        err = f"An error occurred while generating conversation chain for identifying nature of prompt: {e}"
-        return err
+        print(f"An error occurred while identifying the prompt category: {e}")
 
 #Function to generate Review Summarization (Detailed)/Feature Comparison/Feature Suggestion from User Prompt
-def review_summarization(user_question, history):
+def review_summarization(user_question):
     try:
         txt_file_path = "CopilotSamplewithAspect.txt"
         # Automatically call setup with the predefined file on startup
@@ -397,95 +339,88 @@ def review_summarization(user_question, history):
             setup(txt_file_path)
 
         if os.path.exists("faiss_index_CopilotSample"):
-            response = query_detailed(user_question, history)
+            response = query_detailed(user_question)
             return response
         else:
             return "The vector store setup has failed. Please check the file path and try again."
     except Exception as e:
-        err = f"An error occurred while generating detailed review summarization: {e}"
-        return err
+        print(f"An error occurred during review summarization: {e}")
+        
 
 #Function to generate Quantitative Review Summarization from User Prompt
-def quantifiable_data(user_question, history):
+def quantifiable_data(user_question):
     try:
-        response = query_quant(user_question, history)
+        response = query_quant(user_question)
         return response
     except Exception as e:
-        err = f"An error occurred while generating quantitative review summarization: {e}"
-        return err
+        print(f"An error occurred while processing quantifiable data: {e}")
 
 #Function to generate a response from User Question
-def device_llm_review_generator(user_question, history):
+def device_llm_review_generator(user_question):
     try:
         identity_prompt = identify_prompt(user_question)
         if identity_prompt == "Detailed":
-            output = review_summarization(user_question, history)
+            output = review_summarization(user_question)
         elif identity_prompt == "Quantifiable":
-            output = quantifiable_data(user_question, history)
+            output = quantifiable_data(user_question)
         else:
             output = "Error: Cannot identify the nature of your question\nPrompt identified as: "+identity_prompt
         return output
     except Exception as e:
-        err = f"An error occurred while generating LLM response: {e}"
-        return err
-
+        print(f"An error occurred while generating device LLM review: {e}")
 
 ################################# Model Deployment #################################
 
 def main():
-    try:
-    # Chat history state management
+    if 'chat_history' not in st.session_state:
+        st.session_state['chat_history'] = []
+
+    # Displaying logos and titles
+    col1, col2, col3 = st.columns([1, 2, 1])
+    
+    with col1:
+        st.image("microsoft_logo.png", width=50)
+
+    with col2:
+        st.header("Copilot LLM Review Generator")
+
+    with col3:
+        st.image("copilot_logo.svg", width=50)
+
+    # User input section
+    user_input = st.text_input("Enter your text:", placeholder="What would you like to process?")
+
+    # Process button and output section
+    if st.button("Process"):
+        # Re-check if 'chat_history' is initialized before appending
         if 'chat_history' not in st.session_state:
-            st.session_state['chat_history'] = []
+            initialize_session_state()
 
-        # Create a container for logos and title with horizontal layout
-        col1, col2, col3 = st.columns([1, 2, 1])
-      
-        # Display logo on the left
-        with col1:
-            st.image("microsoft_logo.png", width=50)  # Adjust width as needed
+        # Example of a function that generates output
+        output = device_llm_review_generator(user_input)
+        st.session_state['chat_history'].append((user_input, output))
 
-        # Display title in the center
-        with col2:
-            st.header("Copilot LLM Review Generator")
+        # Display output
+        if isinstance(output, pd.DataFrame):
+            st.dataframe(output)
+        else:
+            st.write(output)
 
-        # Display logo on the right
-        with col3:
-            st.image("copilot_logo.svg", width=50)  # Align the logo to the right
-      
-        # User input section
-        user_input = st.text_input("Enter your text:", placeholder="What would you like to process?")
-
-        # Process button and output section
-        if st.button("Process"):
-            output = device_llm_review_generator(user_input,st.session_state['chat_history'])
-            st.session_state['chat_history'].append((user_input, output))
-        
-            # Display output based on type (string or dataframe)
-            if isinstance(output, pd.DataFrame):
-                st.dataframe(output)
-            else:
-                st.write(output)
-
-        # Chat history section with some formatting
-        st.header("Chat History")
+    # Display chat history
+    st.header("Chat History")
+    if 'chat_history' in st.session_state:
         for user_text, output_text in st.session_state['chat_history']:
             st.markdown(f"- You: {user_text}")
             if isinstance(output_text, pd.DataFrame):
-                st.dataframe(output_text)  # Convert dataframe to string for display
+                st.dataframe(output_text)
             else:
                 st.markdown(f"- Bot: {output_text}")
             st.write("---")
-    except Exception as e:
-        err = f"An error occurred while calling the final function: {e}"
-        return err
-
+    else:
+        st.write("No chat history available.")
 
 if __name__ == "__main__":
     main()
-
-
-# In[ ]:
 
 
 
