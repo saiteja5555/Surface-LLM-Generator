@@ -1,3 +1,9 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[ ]:
+
+
 #Import Required Libraries
 import streamlit as st
 from azure.core.credentials import AzureKeyCredential
@@ -421,6 +427,9 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+# In[ ]:
 
 
 
