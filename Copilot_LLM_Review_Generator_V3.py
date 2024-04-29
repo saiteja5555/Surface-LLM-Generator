@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[ ]:
-
-
 #Import Required Libraries
 import streamlit as st
 from azure.core.credentials import AzureKeyCredential
@@ -102,34 +96,41 @@ def setup(txt_file_path):
 # Function to get conversational chain
 def get_conversational_chain_detailed():
     try:
-        prompt_template ="""
-        Given a dataset with these columns: Review, Data_Source, Geography, Product_Family, Sentiment and Aspect (also called Features)
-          
-          Review: This column contains the opinions and experiences of users regarding different product families across geographies, providing insights into customer satisfaction or complaints and areas for improvement.
-          Data_Source: This column indicates the platform from which the user reviews were collected, such as Reddit, Play Store, App Store, Tech Websites, or YouTube videos.
-          Geography: This column lists the countries of the users who provided the reviews, allowing for an analysis of regional preferences and perceptions of the products.
-          Product_Family: This column identifies the broader category of products to which the review pertains, enabling comparisons and trend analysis across different product families.
-          Sentiment: This column reflects the overall tone of the review, whether positive, negative, or neutral, and is crucial for gauging customer sentiment.
-          Aspect: This column highlights the particular features or attributes of the product that the review discusses, pinpointing areas of strength or concern.
-          
-          Perform the required task from the list below, as per user's query: 
-          1. Review Summarization - Summarize the reviews by filtering the relevant Aspect, Geography, Product_Family, Sentiment or Data_Source, only based on available reviews and their sentiments in the dataset.
-          2. Aspect Comparison - Provide a summarized comparison for each overlapping feature/aspect between the product families or geographies ,  only based on available user reviews and their sentiments in the dataset. Include pointers for each aspect highlighting the key differences between the product families or geographies, along with the positive and negative sentiments as per customer perception.
-          3. New Feature Suggestion/Recommendation - Generate feature suggestions or improvements or recommendations based on the frequency and sentiment of reviews and mentioned aspects and keywords. Show detailed responses to user queries by analyzing review sentiment, specific aspects, and keywords.
-          4. Hypothetical Reviews - Generate positive and negative hypothetical reviews for any existing feature updatation or new feature addition in any device family across any geography, by simulating user reactions in different geographies based on existing data in the dataset. Ensure to synthesize realistic reviews that capture the sentiments and opinions of users, by considering their hypothetical prior experience working with the new feature.
-          
-          Enhance the model’s comprehension to accurately interpret user queries by:
-          Recognizing abbreviations for country names (e.g., ‘DE’ for Germany, ‘USA’or 'usa' or 'US' for the United States of America) and expanding them to their full names for clarity.
-          Understanding product family names even when written in reverse order or missing connecting words (e.g., ‘copilot in windows 11’ as ‘copilot windows’ and ‘copilot for security’ as ‘copilot security’ etc.).
-          Utilizing context and available data columns to infer the correct meaning and respond appropriately to user queries involving variations in product family names or geographical references
-          Please provide a comprehensive Review summary, feature comparison, feature suggestions for specific product families and actionable insights that can help in product development and marketing strategies.
-          Generate acurate response only, do not provide extra information.
+        prompt_template = """
+        Given a dataset with the columns: Review, Data_Source, Geography, Title, Product_Family, Product, Sentiment, Aspect, and Keyword etc.
         
-          Important: Ensure to generate outputs using the provided dataset only, don't use pre-trained information to generate outputs.
+        Data Dictionary for column names:
+        Review: This column contains the opinions and experiences of users regarding different product families, providing valuable insights into customer satisfaction and areas for improvement.
+        Data_Source: This column indicates the platform from which the user reviews were collected, such as Reddit, Play Store, App Store, tech websites, or YouTube videos, offering a diverse range of user feedback.
+        Geography: This column lists the countries of the users who provided the reviews, allowing for an analysis of regional preferences and perceptions of the products.
+        Title: The title of the review encapsulates the main focus or issue addressed by the user, serving as a concise summary of the review’s content.
+        Product_Family: This column identifies the broader category of products to which the review pertains, enabling comparisons and trend analysis across similar product lines.
+        Product: This column specifies the individual product being reviewed, providing detailed feedback on specific items within a product family.
+        Sentiment: This column reflects the overall tone of the review, whether positive, negative, or neutral, and is crucial for gauging customer sentiment.
+        Aspect: This column highlights the particular features or attributes of the product that the review discusses, pinpointing areas of strength or concern.
+        Keyword: This column captures the key terms and phrases used by reviewers, which can help identify common themes and important product attributes.
         
-          Context:\n {context}?\n
-          Question: \n{question}\n
-
+        Perform the following tasks:
+     
+        1. Summarize the reviews by extracting key sentiments, Aspects, Keywords and recurring themes across different data sources such as Reddit, Play Store, App Store, tech websites, and YouTube videos.
+        2. Identify and compare the most mentioned features and Aspects within and across product families.
+           Generate feature suggestions based on the frequency and sentiment of mentioned aspects and keywords.
+           Compare user reviews based on geography, sentiment, product, and product family to uncover patterns and differences.
+        3. Generate feature suggestions based on the frequency and sentiment of mentioned aspects and keywords.
+           Predict responses to user queries by analyzing review sentiment, specific aspects, and keywords.
+           
+        Enhance the model’s comprehension to accurately interpret user queries by:
+        Recognizing abbreviations for country names (e.g., ‘DE’ for Germany, ‘USA’or 'usa' for the United States of America) and expanding them to their full names for clarity.
+        Understanding product family names even when written in reverse order or missing connecting words (e.g., ‘copilot in windows 11’ as ‘copilot windows’ and ‘copilot for security’ as ‘copilot security’ etc.).
+        Utilizing context and available data columns to infer the correct meaning and respond appropriately to user queries involving variations in product family names or geographical references
+        Please provide a comprehensive Review summary, feature comparison, feature suggestions for specific product families and actionable insights that can help in product development and marketing strategies.
+        Generate acurate response only, do not provide extra information.
+        
+        Important: Generate outputs using the provided dataset only, don't use pre-trained information to generate outputs.
+        
+        Context:\n {context}?\n
+        Question: \n{question}\n
+    
         Answer:
         """
         prompt = PromptTemplate(template=prompt_template, input_variables=["context", "question"])
@@ -200,58 +201,57 @@ def get_conversational_chain_quant():
     try:
         prompt_template = """
         1. Your Job is to convert the user question to SQL Query (Follow Microsoft SQL server SSMS syntax.). You have to give the query so that it can be used on Microsoft SQL server SSMS.You have to only return query as a result.
-            2. There is only one table with table name Sentiment_Data where each row is a user review. The table has 10 columns, they are:
-                Review: Review of the Copilot Product
-                Data_Source: From where is the review taken. It contains following values: 'LaptopMag', 'PCMag', 'Verge', 'ZDNET', 'PlayStore', 'App Store','AppStore', 'Reddit', 'YouTube'.
-                Geography: From which Country or Region the review was given. It contains following values: 'Unknown', 'Brazil', 'Australia', 'Canada', 'China', 'Germany','France'.
-                Title: What is the title of the review
-                Review_Date: The date on which the review was posted
-                Product: Corresponding product for the review. It contains following values: 'COPILOT'.
-                Product_Family: Which version or type of the corresponding Product was the review posted for. It contains following values: 'Copilot in Windows 11', 'Copilot for Microsoft 365','Microsoft Copilot', 'Copilot for Security', 'Copilot Pro','Github Copilot', 'Copilot for Mobile'.
-                Sentiment: What is the sentiment of the review. It contains following values: 'positive', 'neutral', 'negative'.
-                Aspect: The review is talking about which aspect or feature of the product. It contains following values: 'Microsoft Product', 'Interface', 'Connectivity', 'Privacy','Compatibility', 'Generic', 'Innovation', 'Reliability','Productivity', 'Price', 'Text Summarization/Generation','Code Generation', 'Ease of Use', 'Performance','Personalization/Customization'.
-                Keyword: What are the keywords mentioned in the product
-                Review_Count - It will be 1 for each review or each row
-                Sentiment_Score - It will be 1, 0 or -1 based on the Sentiment.
-            3. Sentiment mark is calculated by sum of Sentiment_Score.
-            4. Net sentiment is calculcated by sum of Sentiment_Score divided by sum of Review_Count. It should be in percentage. Example:
-                    SELECT ((SUM(Sentiment_Score)*1.0)/(SUM(Review_Count)*1.0)) * 100 AS Net_Sentiment 
-                    FROM Sentiment_Data
-                    ORDER BY Net_Sentiment DESC
-            5. Net sentiment across country or across region is sentiment mark of a country divided by total reviews of that country. It should be in percentage.
-                Example to calculate net sentiment across country:
-                    SELECT Geography, ((SUM(Sentiment_Score)*1.0) / (SUM(Review_Count)*1.0)) * 100 AS Net_Sentiment
-                    FROM Sentiment_Data
-                    GROUP BY Geography
-                    ORDER BY Net_Sentiment DESC
-            6. Net Sentiment across a column "X" is calculcated by Sentiment Mark for each "X" divided by Total Reviews for each "X".
-                Example to calculate net sentiment across a column "X":
-                    SELECT X, ((SUM(Sentiment_Score)*1.0) / (SUM(Review_Count)*1.0)) * 100 AS Net_Sentiment
-                    FROM Sentiment_Data
-                    GROUP BY X
-                    ORDER BY Net_Sentiment DESC
-            7. Distribution of sentiment is calculated by sum of Review_Count for each Sentiment divided by overall sum of Review_Count
-                Example: 
-                    SELECT Sentiment, SUM(ReviewCount)*100/(SELECT SUM(Review_Count) AS Reviews FROM Sentiment_Data) AS Total_Reviews 
-                    FROM Sentiment_Data 
-                    GROUP BY Sentiment
-                    ORDER BY Total_Reviews DESC
-            8. Convert numerical outputs to float upto 1 decimal point.
-            9. Always include ORDER BY clause to sort the table based on the aggregate value calculated in the query.
-            10. Top Country is based on Sentiment_Score i.e., the Country which have highest sum(Sentiment_Score)
-            11. Always use 'LIKE' operator whenever they mention about any Country. Use 'LIMIT' operator instead of TOP operator.Do not use TOP OPERATOR. Follow syntax that can be used with pandasql.
-            12. If you are using any field in the aggregate function in select statement, make sure you add them in GROUP BY Clause.
-            13. Make sure to Give the result as the query so that it can be used on Microsoft SQL server SSMS.
-            14. Important: Always show Net_Sentiment in Percentage upto 1 decimal point. Hence always make use of ROUND function while giving out Net Sentiment and Add % Symbol after it.
-            15. Important: User can ask question about any categories including Aspects, Geograpgy, Sentiment etc etc. Hence, include the in SQL Query if someone ask it.
-            16. Important: You Response should directly starts from SQL query nothing else.
-            17. Important: Always use LIKE keyword instead of = symbol while generating SQL query.
-            18. Important: Generate outputs using the provided dataset only, don't use pre-trained information to generate outputs.
-        \n Following is the previous conversation from User and Response, use it to get context only:""" + hist + """\n
-                Use the above conversation chain to gain context if the current prompt requires context from previous conversation.\n
+        2. There is only one table with table name Sentiment_Data where each row is a user review. The table has 10 columns, they are:
+            Review: Review of the Copilot Product
+            Data_Source: From where is the review taken. It contains following values: 'LaptopMag', 'PCMag', 'Verge', 'ZDNET', 'PlayStore', 'App Store','AppStore', 'Reddit', 'YouTube'.
+            Geography: From which Country or Region the review was given. It contains following values: 'Unknown', 'Brazil', 'Australia', 'Canada', 'China', 'Germany','France'.
+            Title: What is the title of the review
+            Review_Date: The date on which the review was posted
+            Product: Corresponding product for the review. It contains following values: 'COPILOT'.
+            Product_Family: Which version or type of the corresponding Product was the review posted for. It contains following values: 'Copilot in Windows 11', 'Copilot for Microsoft 365','Microsoft Copilot', 'Copilot for Security', 'Copilot Pro','Github Copilot', 'Copilot for Mobile'.
+            Sentiment: What is the sentiment of the review. It contains following values: 'positive', 'neutral', 'negative'.
+            Aspect: The review is talking about which aspect or feature of the product. It contains following values: 'Microsoft Product', 'Interface', 'Connectivity', 'Privacy','Compatibility', 'Generic', 'Innovation', 'Reliability','Productivity', 'Price', 'Text Summarization/Generation','Code Generation', 'Ease of Use', 'Performance','Personalization/Customization'.
+            Keyword: What are the keywords mentioned in the product
+            Review_Count - It will be 1 for each review or each row
+            Sentiment_Score - It will be 1, 0 or -1 based on the Sentiment.
+        3. Sentiment mark is calculated by sum of Sentiment_Score.
+        4. Net sentiment is calculcated by sum of Sentiment_Score divided by sum of Review_Count. It should be in percentage. Example:
+                SELECT ((SUM(Sentiment_Score)*1.0)/(SUM(Review_Count)*1.0)) * 100 AS Net_Sentiment 
+                FROM Sentiment_Data
+                ORDER BY Net_Sentiment DESC
+        5. Net sentiment across country or across region is sentiment mark of a country divided by total reviews of that country. It should be in percentage.
+            Example to calculate net sentiment across country:
+                SELECT Geography, ((SUM(Sentiment_Score)*1.0) / (SUM(Review_Count)*1.0)) * 100 AS Net_Sentiment
+                FROM Sentiment_Data
+                GROUP BY Geography
+                ORDER BY Net_Sentiment DESC
+        6. Net Sentiment across a column "X" is calculcated by Sentiment Mark for each "X" divided by Total Reviews for each "X".
+            Example to calculate net sentiment across a column "X":
+                SELECT X, ((SUM(Sentiment_Score)*1.0) / (SUM(Review_Count)*1.0)) * 100 AS Net_Sentiment
+                FROM Sentiment_Data
+                GROUP BY X
+                ORDER BY Net_Sentiment DESC
+        7. Distribution of sentiment is calculated by sum of Review_Count for each Sentiment divided by overall sum of Review_Count
+            Example: 
+                SELECT Sentiment, SUM(ReviewCount)*100/(SELECT SUM(Review_Count) AS Reviews FROM Sentiment_Data) AS Total_Reviews 
+                FROM Sentiment_Data 
+                GROUP BY Sentiment
+                ORDER BY Total_Reviews DESC
+        8. Convert numerical outputs to float upto 1 decimal point.
+        9. Always include ORDER BY clause to sort the table based on the aggregate value calculated in the query.
+        10. Top Country is based on Sentiment_Score i.e., the Country which have highest sum(Sentiment_Score)
+        11. Always use 'LIKE' operator whenever they mention about any Country. Use 'LIMIT' operator instead of TOP operator.Do not use TOP OPERATOR. Follow syntax that can be used with pandasql.
+        12. If you are using any field in the aggregate function in select statement, make sure you add them in GROUP BY Clause.
+        13. Make sure to Give the result as the query so that it can be used on Microsoft SQL server SSMS.
+        14. Important: Always show Net_Sentiment in Percentage upto 1 decimal point. Hence always make use of ROUND function while giving out Net Sentiment and Add % Symbol after it.
+        15. Important: User can ask question about any categories including Aspects, Geograpgy, Sentiment etc etc. Hence, include the in SQL Query if someone ask it.
+        16. Important: You Response should directly starts from SQL query nothing else.
+        17. Important: Always use LIKE keyword instead of = symbol while generating SQL query.
+        18. Important: Generate outputs using the provided dataset only, don't use pre-trained information to generate outputs.
+        
         Context:\n {context}?\n
         Question: \n{question}\n
-
+    
         Answer:
         """
         prompt = PromptTemplate(template=prompt_template, input_variables=["context", "question"])
@@ -296,29 +296,22 @@ def query_quant(user_question, vector_store_path="faiss_index_CopilotSample"):
 def identify_prompt(user_question):
     try:
         prompt_template = """
-        Given a user prompt about customer reviews for Product_Families(Copilot, Copilot for Microsoft 365, Copilot for Mobile, Copilot for Security, Copilot in Windows 11, Copilot Pro, Github Copilot, Microsoft Copilot) from Product Copilot and various different features, classify the prompt into one of two categories:
+        Given a user prompt about customer reviews for products (Copilot, Windows, Surface) and various different features, classify the prompt into one of two categories:
             Quantifiable: This prompt seeks a numerical answer or data point related to the reviews. 
-                            (e.g., What is the overall sentiment score for Product_Family X reviews?
-                                   How many reviews mention Feature Y in Product_Family Z?
-                                   Calculate the net sentiment score for reviews from Country A.
-                                   What is the sentiment distribution (positive, neutral, negative) for Product_Family X reviews?
-                                   How does the sentiment score vary across different sources (e.g., PlayStore, Reddit, YouTube) for Product_Family X?
-                                   Show the top N countries with the highest net sentiment scores for Product_Family X.
-                                   Provide a breakdown of sentiment scores by Product_Family.
-                                   What percentage of reviews mention Keyword K across all Product_Families?
-                                   Compare the net sentiment scores between Product_Family X and Product_Family Y.
-                                   How many reviews from Region Z have a sentiment score above a certain threshold for Product_Family X?
-            Detailed: This prompt seeks a summary, comparison, recommendation/suggestion or hypothetical reviews based on the reviews, expressed in words. The task can be either Review Summarization, Feature Comparison, New Feature Suggestion/Recommendation or Hypothetical Reviews generation based on the type of user question:
-                      Eg - Summarize / Give a summary of the reviews for different product families or geographies - Review Summarization 
-                      Eg - Give feature comparison among product families a1,a2,a3... across geographies g1,g2,g3... or Compare the features of product families a1,a2,a3... across geographies g1,g2,g3,... or Compare utility of feature 'x' among product families a1,a2,a3... across geographies g1,g2,g3... - Aspect Comparison
-                      Eg - Suggest new features or improvements or recommendations for different product families in different geographies - New Feature Suggestion/Recommendation
-                      Eg - Generate hypothetical user reviews for the feature upgrade for any product family in any geography, focusing on the feature/aspect or Provide hypothetical user reviews for the addition of the new feature 'x' in any product family across any geography- Hypothetical Reviews
-
+                            (e.g., "What is the net sentiment score for Product A reviews?", 
+                                    "How many reviews mention the battery life of Product B?", 
+                                    "Calculate the net sentiment of Product A.", 
+                                    "Net Sentiment", 
+                                    "Sentiment Score", 
+                                    "Top Countries", 
+                                    "Top Products", etc.)
+            Detailed: This prompt seeks a summary, comparison, analysis, or recommendation based on the reviews, expressed in words. (e.g., "Summarize the key features from Product A reviews", "Compare the ease of use of Product A and Product B based on reviews", "What features are most praised in Product B reviews?", etc.)
+    
         Input: User prompt about customer reviews
         Output: Category (Quantifiable or Detailed)
         Context:\n {context}?\n
         Question: \n{question}\n
-
+    
         Answer:
         """
         prompt = PromptTemplate(template=prompt_template, input_variables=["context", "question"])
@@ -427,10 +420,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-# In[ ]:
-
-
-
-
